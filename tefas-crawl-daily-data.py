@@ -41,7 +41,7 @@ def create_fund_table(cursor, fund_code):
             id INT AUTO_INCREMENT PRIMARY KEY,
             data_date DATE NOT NULL,
             son_fiyat DECIMAL(13, 6) NULL,
-            gunluk_getiri DECIMAL(5, 4) NULL,
+            gunluk_getiri DECIMAL(9, 6) NULL,
             pay_adet BIGINT NULL,
             fon_toplam_deger DECIMAL(20, 2) NULL,
             kategorisi VARCHAR(100) NULL,
@@ -49,6 +49,10 @@ def create_fund_table(cursor, fund_code):
             yatirimci_sayisi INT NULL,
             pazar_payi DECIMAL(5, 2) NULL,
             ortalama_yatirim_miktari DECIMAL(20, 2) NULL,
+            son_1_ay_getirisi DECIMAL(9, 6) NULL,
+            son_3_ay_getirisi DECIMAL(9, 6) NULL,
+            son_6_ay_getirisi DECIMAL(9, 6) NULL,
+            son_1_yil_getirisi DECIMAL(9, 6) NULL,
             UNIQUE KEY unique_date (data_date)
         );
     """
@@ -95,17 +99,38 @@ def insert_or_update_data(conn, cursor, fund_code, data):
 
 def insert_data(conn, cursor, fund_code, data):
     insert_query = f"""
-        INSERT INTO `{fund_code}` (data_date, son_fiyat, gunluk_getiri, pay_adet, 
-                                   fon_toplam_deger, kategorisi, kategori_derecesi, 
-                                   yatirimci_sayisi, pazar_payi, ortalama_yatirim_miktari)
-        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s);
+        INSERT INTO `{fund_code}` (data_date,
+                                   son_fiyat,
+                                   gunluk_getiri,
+                                   pay_adet,
+                                   fon_toplam_deger,
+                                   kategorisi,
+                                   kategori_derecesi,
+                                   yatirimci_sayisi,
+                                   pazar_payi,
+                                   ortalama_yatirim_miktari,
+                                   son_1_ay_getirisi,
+                                   son_3_ay_getirisi,
+                                   son_6_ay_getirisi,
+                                   son_1_yil_getirisi)
+        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s);
     """
     try:
         cursor.execute(insert_query, (
-            data['data_date'], data['son_fiyat'], data['gunluk_getiri'],
-            data['pay_adet'], data['fon_toplam_deger'], data['kategorisi'],
-            data['kategori_derecesi'], data['yatirimci_sayisi'], data['pazar_payi'],
-            data['ortalama_yatirim_miktari']
+            data['data_date'],
+            data['son_fiyat'],
+            data['gunluk_getiri'],
+            data['pay_adet'],
+            data['fon_toplam_deger'],
+            data['kategorisi'],
+            data['kategori_derecesi'],
+            data['yatirimci_sayisi'],
+            data['pazar_payi'],
+            data['ortalama_yatirim_miktari'],
+            data['son_1_ay_getirisi'],
+            data['son_3_ay_getirisi'],
+            data['son_6_ay_getirisi'],
+            data['son_1_yil_getirisi']
         ))
         conn.commit()
         logging.info(f"New data for {fund_code} on {data['data_date']} inserted successfully.")
@@ -116,16 +141,37 @@ def insert_data(conn, cursor, fund_code, data):
 def update_data(conn, cursor, fund_code, data):
     update_query = f"""
         UPDATE `{fund_code}`
-        SET son_fiyat = %s, gunluk_getiri = %s, pay_adet = %s, fon_toplam_deger = %s,
-            kategorisi = %s, kategori_derecesi = %s, yatirimci_sayisi = %s, pazar_payi = %s,
-            ortalama_yatirim_miktari = %s
+        SET son_fiyat = %s,
+            gunluk_getiri = %s,
+            pay_adet = %s,
+            fon_toplam_deger = %s,
+            kategorisi = %s,
+            kategori_derecesi = %s,
+            yatirimci_sayisi = %s,
+            pazar_payi = %s,
+            ortalama_yatirim_miktari = %s,
+            son_1_ay_getirisi = %s,
+            son_3_ay_getirisi = %s,
+            son_6_ay_getirisi = %s,
+            son_1_yil_getirisi = %s
         WHERE data_date = %s;
     """
     try:
         cursor.execute(update_query, (
-            data['son_fiyat'], data['gunluk_getiri'], data['pay_adet'],
-            data['fon_toplam_deger'], data['kategorisi'], data['kategori_derecesi'],
-            data['yatirimci_sayisi'], data['pazar_payi'], data['ortalama_yatirim_miktari'], data['data_date']
+            data['son_fiyat'],
+            data['gunluk_getiri'],
+            data['pay_adet'],
+            data['fon_toplam_deger'],
+            data['kategorisi'],
+            data['kategori_derecesi'],
+            data['yatirimci_sayisi'],
+            data['pazar_payi'],
+            data['ortalama_yatirim_miktari'],
+            data['son_1_ay_getirisi'],
+            data['son_3_ay_getirisi'],
+            data['son_6_ay_getirisi'],
+            data['son_1_yil_getirisi'],
+            data['data_date']
         ))
         conn.commit()
         logging.info(f"Data for {fund_code} on {data['data_date']} updated successfully.")
@@ -150,7 +196,11 @@ def process_fund_code(code):
             'kategori_derecesi': extract_data("Son Bir Yıllık Kategori Derecesi", soup),
             'yatirimci_sayisi': extract_data("Yatırımcı Sayısı (Kişi)", soup),
             'pazar_payi': extract_data("Pazar Payı", soup),
-            'ortalama_yatirim_miktari': float(extract_data("Fon Toplam Değer (TL)", soup)) / int(extract_data("Yatırımcı Sayısı (Kişi)", soup)) if int(extract_data("Yatırımcı Sayısı (Kişi)", soup)) != 0 else 0
+            'ortalama_yatirim_miktari': float(extract_data("Fon Toplam Değer (TL)", soup)) / int(extract_data("Yatırımcı Sayısı (Kişi)", soup)) if int(extract_data("Yatırımcı Sayısı (Kişi)", soup)) != 0 else 0,
+            'son_1_ay_getirisi': extract_data("Son 1 Ay Getirisi", soup),
+            'son_3_ay_getirisi': extract_data("Son 3 Ay Getirisi", soup),
+            'son_6_ay_getirisi': extract_data("Son 6 Ay Getirisi", soup),
+            'son_1_yil_getirisi': extract_data("Son 1 Yıl Getirisi", soup)
         }
 
         if None not in data.values():
